@@ -4,5 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./result:/root/rpmbuild/RPMS/
+      - ./rpmbuild:/root/rpmbuild/RPMS/
     privileged: true
+    mem_limit: 32G

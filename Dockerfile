@@ -23,7 +23,7 @@ RUN sed -i 's/el8/el9/g' /root/rpmbuild/SPECS/icinga2.spec && \
     rpmbuild -bs /root/rpmbuild/SPECS/icinga2.spec
 
 # Build the source RPM
-RUN echo "mock -r almalinux-9-x86_64 --rebuild /root/rpmbuild/SRPMS/icinga2-${ICINGA_VERSION}-1.el9.src.rpm && cp /var/lib/mock/almalinux-9-x86_64/result/*.rpm /root/rpmbuild/RPMS/" > /root/build.sh
+RUN echo "mock -r almalinux-9-x86_64 --rebuild /root/rpmbuild/SRPMS/icinga2-${ICINGA_VERSION}-1.el9.src.rpm" > /root/build.sh
 
 # Make the build script executable
 RUN chmod +x /root/build.sh
