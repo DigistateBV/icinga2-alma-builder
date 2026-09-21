@@ -33,10 +33,14 @@ RUN sed -i "s/el8/el${ALMALINUX_VERSION}/g" /root/rpmbuild/SPECS/icinga2.spec &&
     rpmbuild -bs /root/rpmbuild/SPECS/icinga2.spec
 
 # Build the source RPM
-RUN echo "mock -r almalinux-${ALMALINUX_VERSION}-x86_64 --rebuild /root/rpmbuild/SRPMS/icinga2-${ICINGA_VERSION}-1.el${ALMALINUX_VERSION}.src.rpm --define \"_smp_mflags -j$(nproc)\"" > /root/build.sh
+RUN echo "mock -r almalinux-${ALMALINUX_VERSION}-x86_64 --rebuild /root/rpmbuild/SRPMS/icinga2-${ICINGA_VERSION}-1.el${ALMALINUX_VERSION}.src.rpm --define \"_smp_mflags -j$(nproc)\" && \
+    cp /var/lib/mock/almalinux-${ALMALINUX_VERSION}-x86_64/result/*.rpm /root/rpmbuild/RPMS/" > /root/build.sh
 
 # Make the build script executable
 RUN chmod +x /root/build.sh
+
+# Make sure the RPMs are saved to the host
+VOLUME /root/rpmbuild/RPMS
 
 # Run the build script
 CMD ["bash", "/root/build.sh"]
