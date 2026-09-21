@@ -1,0 +1,76 @@
+name: Deploy yum repository to GitHub Pages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install createrepo
+        run: sudo apt-get update && sudo apt-get install -y createrepo-c
+
+      - name: Build yum repository from release RPMs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          TAG="${RELEASE_TAG:-$(gh release view --json tagName --jq .tagName)}"
+          echo "Using release $TAG"
+
+          mkdir -p site/el9 site/el10 rpms
+          gh release download "$TAG" --pattern '*.rpm' --dir rpms
+
+          shopt -s nullglob
+          for rpm in rpms/*.rpm; do
+            base=$(basename "$rpm")
+            case "$base" in
+              *.src.rpm) echo "Skipping source RPM $base" ;;
+              *.el10.*) mv "$rpm" site/el10/ ;;
+              *.el9.*) mv "$rpm" site/el9/ ;;
+              *) echo "Skipping unrecognized RPM $base" ;;
+            esac
+          done
+
+          if ! ls site/el9/*.rpm >/dev/null 2>&1 && ! ls site/el10/*.rpm >/dev/null 2>&1; then
+            echo "No binary RPMs found in release $TAG"
+            exit 1
+          fi
+
+          for el in el9 el10; do
+            if ls "site/$el"/*.rpm >/dev/null 2>&1; then
+              createrepo_c "site/$el"
+            fi
+          done
+
+          cp icinga2-alma.repo pages/index.html site/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

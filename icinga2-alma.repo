@@ -1,0 +1,5 @@
+[icinga2-alma]
+name=Icinga 2 for AlmaLinux $releasever (unofficial rebuild)
+baseurl=https://digistatebv.github.io/icinga2-alma-builder/el$releasever
+enabled=1
+gpgcheck=0

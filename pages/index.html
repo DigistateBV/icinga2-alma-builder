@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Icinga 2 AlmaLinux packages</title>
+</head>
+<body>
+  <h1>Icinga 2 AlmaLinux packages</h1>
+  <p>Unofficial Icinga 2 rebuilds for AlmaLinux 9 and 10.</p>
+  <pre>sudo curl -fsSL -o /etc/yum.repos.d/icinga2-alma.repo \
+  https://digistatebv.github.io/icinga2-alma-builder/icinga2-alma.repo
+sudo dnf install icinga2</pre>
+  <p>Packages are not GPG-signed. The repo file uses <code>$releasever</code>, so AlmaLinux 9 and 10 pick the matching subdirectory automatically.</p>
+</body>
+</html>

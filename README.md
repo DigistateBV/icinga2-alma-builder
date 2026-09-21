@@ -10,10 +10,10 @@ Build arguments:
 
 `docker-compose.yml` defines two services that pass `ALMALINUX_VERSION`:
 
-| Service | Target        | RPMs on the host     |
-| ------- | ------------- | -------------------- |
-| `alma9` | AlmaLinux 9   | `rpmbuild-alma9/`    |
-| `alma10`| AlmaLinux 10  | `rpmbuild-alma10/`   |
+| Service  | Target       | RPMs on the host   |
+| ----------| --------------| --------------------|
+| `alma9`  | AlmaLinux 9  | `rpmbuild-alma9/`  |
+| `alma10` | AlmaLinux 10 | `rpmbuild-alma10/` |
 
 ## Prerequisites
 
@@ -97,7 +97,7 @@ If the tag already exists, add `--target main` only when creating a new tag;
 do not overwrite an existing release unless you intend to.
 
 After the release is published, the RPMs are available on the GitHub release
-page for that tag.
+page for that tag. A workflow also rebuilds the yum/dnf repository on GitHub Pages from those release assets.
 
 ### GitHub web UI
 
@@ -107,3 +107,26 @@ page for that tag.
 4. Set the title (for example `Icinga 2.16.5 for AlmaLinux 9 and 10`) and a short description of what was built.
 5. Attach the RPM files from `rpmbuild-alma9/` and `rpmbuild-alma10/` (you can select the `x86_64` and `noarch` contents of each).
 6. Publish the release.
+
+## Install from GitHub Pages
+
+One-time setup on AlmaLinux 9 or 10:
+
+```bash
+sudo curl -fsSL -o /etc/yum.repos.d/icinga2-alma.repo \
+  https://digistatebv.github.io/icinga2-alma-builder/icinga2-alma.repo
+sudo dnf install icinga2
+```
+
+The repo file uses `$releasever`, so the host picks `el9` or `el10` automatically.
+Packages are not GPG-signed (`gpgcheck=0`).
+
+### Enable GitHub Pages (once)
+
+In the GitHub repo: **Settings → Pages → Source: GitHub Actions**. After that, publishing a release (or running the **Deploy yum repository to GitHub Pages** workflow) publishes:
+- `icinga2-alma.repo`
+- `el9/` and `el10/` yum repositories built with `createrepo_c` from the
+  release RPMs
+
+The site URL is
+https://digistatebv.github.io/icinga2-alma-builder/
