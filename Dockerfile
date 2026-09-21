@@ -1,7 +1,7 @@
 FROM almalinux/9-base:latest
 
 # Set the version of Icinga to build
-ENV ICINGA_VERSION=2.14.5
+ENV ICINGA_VERSION=2.16.5
 ENV ICINGA_SRPM_VERSION=2.14.3
 
 # Install dependencies
@@ -19,11 +19,13 @@ ADD https://github.com/Icinga/icinga2/archive/refs/tags/v${ICINGA_VERSION}.tar.g
 
 # Update the spec file to use el9
 RUN sed -i 's/el8/el9/g' /root/rpmbuild/SPECS/icinga2.spec && \
-    sed -i 's/2.14.3/2.14.5/g' /root/rpmbuild/SPECS/icinga2.spec && \
+    sed -i "s/2.14.3/${ICINGA_VERSION}/g" /root/rpmbuild/SPECS/icinga2.spec && \
+    sed -i "s/-DICINGA2_GROUP=icinga /-DICINGA2_GROUP=icinga -DICINGA2_WITH_OPENTELEMETRY=OFF /g" /root/rpmbuild/SPECS/icinga2.spec && \
+    sed -i "s/BuildRequires: systemd-devel/BuildRequires: systemd-devel\nBuildRequires: protobuf-devel\nBuildRequires: protobuf-lite-devel/g" /root/rpmbuild/SPECS/icinga2.spec && \
     rpmbuild -bs /root/rpmbuild/SPECS/icinga2.spec
 
 # Build the source RPM
-RUN echo "mock -r almalinux-9-x86_64 --rebuild /root/rpmbuild/SRPMS/icinga2-${ICINGA_VERSION}-1.el9.src.rpm" > /root/build.sh
+RUN echo "mock -r almalinux-9-x86_64 --rebuild /root/rpmbuild/SRPMS/icinga2-${ICINGA_VERSION}-1.el9.src.rpm --define \"_smp_mflags -j$(nproc)\"" > /root/build.sh
 
 # Make the build script executable
 RUN chmod +x /root/build.sh
