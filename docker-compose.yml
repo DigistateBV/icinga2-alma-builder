@@ -1,9 +1,22 @@
 services:
-  icinga2:
+  alma9:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        ALMALINUX_VERSION: 9
     volumes:
-      - ./rpmbuild:/root/rpmbuild/RPMS/
+      - ./rpmbuild-alma9:/root/rpmbuild/RPMS/
+    privileged: true
+    mem_limit: 32G
+
+  alma10:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ALMALINUX_VERSION: 10
+    volumes:
+      - ./rpmbuild-alma10:/root/rpmbuild/RPMS/
     privileged: true
     mem_limit: 32G
