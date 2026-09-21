@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag whose RPMs should be published (empty = latest)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -15,11 +20,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Release events run on the git tag. The github-pages environment only
+  # allows the default branch (main) by default, so start a deploy from main.
+  dispatch:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Dispatch deploy on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run pages.yml \
+            --repo "${{ github.repository }}" \
+            --ref main \
+            -f "release_tag=${{ github.event.release.tag_name }}"
+
   deploy:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,7 +58,7 @@ jobs:
       - name: Build yum repository from release RPMs
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
         run: |
           set -euo pipefail
           TAG="${RELEASE_TAG:-$(gh release view --json tagName --jq .tagName)}"
