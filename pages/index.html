@@ -2,14 +2,363 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Icinga 2 AlmaLinux packages</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Icinga 2 AlmaLinux packages · DigiState</title>
+  <meta name="description" content="Unofficial Icinga 2 RPM rebuilds for AlmaLinux 9 and 10. Install via dnf or Ansible from DigiState’s yum repository.">
+  <link rel="canonical" href="https://digistatebv.github.io/icinga2-alma-builder/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DigiState">
+  <meta property="og:title" content="Icinga 2 AlmaLinux packages · DigiState">
+  <meta property="og:description" content="Unofficial Icinga 2 RPM rebuilds for AlmaLinux 9 and 10. Install via dnf or Ansible from DigiState’s yum repository.">
+  <meta property="og:url" content="https://digistatebv.github.io/icinga2-alma-builder/">
+  <meta property="og:image" content="https://digistatebv.github.io/icinga2-alma-builder/digistate.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dark: #232321;
+      --white: #FAFAFA;
+      --lime: #a3d71d;
+      --lime-hover: #88a800;
+      --muted: #5b676c;
+      --surface: #ffffff;
+      --code-bg: #1a1a18;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DM Sans", sans-serif;
+      font-optical-sizing: auto;
+      color: var(--dark);
+      background:
+        radial-gradient(ellipse 80% 50% at 100% -10%, rgba(163, 215, 29, 0.18), transparent 55%),
+        radial-gradient(ellipse 60% 40% at -5% 30%, rgba(91, 103, 108, 0.12), transparent 50%),
+        linear-gradient(180deg, #f3f5ef 0%, var(--white) 45%, #eef1ea 100%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: var(--lime-hover);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--dark);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .page {
+      width: min(720px, calc(100% - 2.5rem));
+      margin: 0 auto;
+      padding: 3.5rem 0 2rem;
+      flex: 1;
+    }
+
+    .brand {
+      display: inline-block;
+      margin-bottom: 2.75rem;
+      opacity: 0;
+      animation: rise 0.7s ease forwards;
+    }
+
+    .brand img {
+      display: block;
+      height: 44px;
+      width: auto;
+    }
+
+    h1 {
+      margin: 0 0 0.85rem;
+      font-size: clamp(1.85rem, 4.5vw, 2.65rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      opacity: 0;
+      animation: rise 0.7s ease 0.08s forwards;
+    }
+
+    .lede {
+      margin: 0 0 2.25rem;
+      max-width: 38ch;
+      font-size: 1.125rem;
+      line-height: 1.55;
+      color: var(--muted);
+      opacity: 0;
+      animation: rise 0.7s ease 0.16s forwards;
+    }
+
+    .install {
+      opacity: 0;
+      animation: rise 0.7s ease 0.24s forwards;
+    }
+
+    .install + .install {
+      margin-top: 1.75rem;
+      animation-delay: 0.3s;
+    }
+
+    .install-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .install-label span {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .code-wrap {
+      position: relative;
+      background: var(--code-bg);
+      color: var(--white);
+      border-radius: 4px;
+      border-left: 4px solid var(--lime);
+      overflow: hidden;
+    }
+
+    .code-wrap pre {
+      margin: 0;
+      padding: 1.25rem 1.35rem;
+      padding-right: 5.5rem;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.82rem;
+      line-height: 1.65;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      appearance: none;
+      border: 0;
+      margin: 0;
+      padding: 0.45rem 0.85rem;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--dark);
+      background: var(--lime);
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--lime-hover);
+    }
+
+    .copy-btn:active {
+      transform: scale(0.97);
+    }
+
+    .copy-btn:focus-visible {
+      outline: 2px solid var(--white);
+      outline-offset: 2px;
+    }
+
+    .copy-btn[data-copied="true"] {
+      background: var(--white);
+      color: var(--dark);
+    }
+
+    .note {
+      margin: 1.35rem 0 0;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--muted);
+      opacity: 0;
+      animation: rise 0.7s ease 0.38s forwards;
+    }
+
+    .note code {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.85em;
+      color: var(--dark);
+      background: rgba(163, 215, 29, 0.22);
+      padding: 0.1em 0.35em;
+    }
+
+    footer {
+      width: min(720px, calc(100% - 2.5rem));
+      margin: 0 auto;
+      padding: 1.5rem 0 2.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(35, 35, 33, 0.12);
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    footer .by {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .page {
+        padding-top: 2.25rem;
+      }
+
+      .code-wrap pre {
+        padding-right: 1.25rem;
+        padding-top: 3.25rem;
+      }
+
+      .copy-btn {
+        top: 0.65rem;
+        right: 0.65rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .brand,
+      h1,
+      .lede,
+      .install,
+      .note {
+        opacity: 1;
+        animation: none;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Icinga 2 AlmaLinux packages</h1>
-  <p>Unofficial Icinga 2 rebuilds for AlmaLinux 9 and 10.</p>
-  <pre>sudo curl -fsSL -o /etc/yum.repos.d/icinga2-alma.repo \
+  <main class="page">
+    <a class="brand" href="https://digistate.nl/" aria-label="DigiState">
+      <img src="digistate.webp" width="221" height="50" alt="DigiState">
+    </a>
+
+    <h1>Icinga 2 AlmaLinux packages</h1>
+    <p class="lede">Unofficial Icinga 2 rebuilds for AlmaLinux 9 and 10, published by DigiState.</p>
+
+    <section class="install" aria-label="Shell install">
+      <div class="install-label">
+        <span>Shell</span>
+      </div>
+      <div class="code-wrap">
+        <button type="button" class="copy-btn" aria-label="Copy shell install commands">Copy</button>
+        <pre>sudo curl -fsSL -o /etc/yum.repos.d/icinga2-alma.repo \
   https://digistatebv.github.io/icinga2-alma-builder/icinga2-alma.repo
 sudo dnf install icinga2</pre>
-  <p>Packages are not GPG-signed. The repo file uses <code>$releasever</code>, so AlmaLinux 9 and 10 pick the matching subdirectory automatically.</p>
+      </div>
+    </section>
+
+    <section class="install" aria-label="Ansible install">
+      <div class="install-label">
+        <span>Ansible</span>
+      </div>
+      <div class="code-wrap">
+        <button type="button" class="copy-btn" aria-label="Copy Ansible tasks">Copy</button>
+        <pre>- name: Add DigiState Icinga 2 AlmaLinux repository
+  ansible.builtin.yum_repository:
+    name: icinga2-alma
+    description: Icinga 2 for AlmaLinux $releasever (unofficial rebuild)
+    baseurl: https://digistatebv.github.io/icinga2-alma-builder/el$releasever
+    enabled: true
+    gpgcheck: false
+
+- name: Install Icinga 2
+  ansible.builtin.package:
+    name: icinga2
+    state: present
+
+- name: Enable and start Icinga 2
+  ansible.builtin.service:
+    name: icinga2
+    enabled: true
+    state: started</pre>
+      </div>
+    </section>
+
+    <p class="note">Packages are not GPG-signed. The repo file uses <code>$releasever</code>, so AlmaLinux 9 and 10 pick the matching subdirectory automatically.</p>
+  </main>
+
+  <footer>
+    <span class="by">Built by <a href="https://digistate.nl/">DigiState</a></span>
+    <a href="https://github.com/DigistateBV/icinga2-alma-builder">Source on GitHub</a>
+  </footer>
+
+  <script>
+    (function () {
+      function fallbackCopy(text, done) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "absolute";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+          done();
+        } finally {
+          document.body.removeChild(ta);
+        }
+      }
+
+      document.querySelectorAll(".code-wrap").forEach(function (wrap) {
+        var btn = wrap.querySelector(".copy-btn");
+        var pre = wrap.querySelector("pre");
+        if (!btn || !pre) return;
+
+        var resetTimer;
+
+        btn.addEventListener("click", function () {
+          var text = pre.textContent;
+          var done = function () {
+            btn.textContent = "Copied";
+            btn.setAttribute("data-copied", "true");
+            clearTimeout(resetTimer);
+            resetTimer = setTimeout(function () {
+              btn.textContent = "Copy";
+              btn.removeAttribute("data-copied");
+            }, 2000);
+          };
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () {
+              fallbackCopy(text, done);
+            });
+          } else {
+            fallbackCopy(text, done);
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

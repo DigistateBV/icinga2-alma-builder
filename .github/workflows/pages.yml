@@ -89,7 +89,7 @@ jobs:
             fi
           done
 
-          cp icinga2-alma.repo pages/index.html site/
+          cp icinga2-alma.repo pages/index.html pages/*.webp site/
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
