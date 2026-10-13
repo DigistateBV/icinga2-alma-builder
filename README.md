@@ -1,48 +1,99 @@
-# Icinga 2 AlmaLinux builder
+<p align="center">
+  <a href="https://digistate.nl/">
+    <img src="pages/digistate.webp" alt="DigiState" width="221" height="50">
+  </a>
+</p>
 
-Rebuilds Icinga 2 as RPMs for AlmaLinux 9 and AlmaLinux 10 from a single Dockerfile. The image starts from an official EL8 source RPM, updates the spec for the target EL version, fetches the requested Icinga 2 tarball, and rebuilds with `mock`.
+# Icinga 2 packages for AlmaLinux
 
-Build arguments:
+Unofficial Icinga 2 RPM rebuilds for **AlmaLinux 9** and **AlmaLinux 10**, published by [DigiState](https://digistate.nl/).
 
-- `ALMALINUX_VERSION` — target major version (`9` or `10`; default `9`)
-- `ICINGA_VERSION` — Icinga 2 tag to download and package (default `2.16.5`)
-- `ICINGA_SRPM_VERSION` — version of the bundled source RPM (currently `2.14.3`)
+Packages are not GPG-signed. Use at your own risk.
 
-`docker-compose.yml` defines two services that pass `ALMALINUX_VERSION`:
+**Install page:** https://digistatebv.github.io/icinga2-alma-builder/
 
-| Service  | Target       | RPMs on the host   |
-| ----------| --------------| --------------------|
-| `alma9`  | AlmaLinux 9  | `rpmbuild-alma9/`  |
+## Install with dnf
+
+On AlmaLinux 9 or 10:
+
+```bash
+sudo curl -fsSL -o /etc/yum.repos.d/icinga2-alma.repo \
+  https://digistatebv.github.io/icinga2-alma-builder/icinga2-alma.repo
+sudo dnf install icinga2
+```
+
+The repo file uses `$releasever`, so the host picks `el9` or `el10` automatically.
+
+## Install with Ansible
+
+```yaml
+- name: Add DigiState Icinga 2 AlmaLinux repository
+  ansible.builtin.yum_repository:
+    name: icinga2-alma
+    description: Icinga 2 for AlmaLinux $releasever (unofficial rebuild)
+    baseurl: https://digistatebv.github.io/icinga2-alma-builder/el$releasever
+    enabled: true
+    gpgcheck: false
+
+- name: Install Icinga 2
+  ansible.builtin.package:
+    name: icinga2
+    state: present
+
+- name: Enable and start Icinga 2
+  ansible.builtin.service:
+    name: icinga2
+    enabled: true
+    state: started
+```
+
+## Download RPMs directly
+
+Individual packages are attached to [GitHub Releases](https://github.com/DigistateBV/icinga2-alma-builder/releases). Prefer the yum/dnf repo above for normal installs and updates.
+
+---
+
+## Rebuild the packages yourself
+
+This repository also contains the Docker-based rebuild pipeline. Most users can skip this section.
+
+The image starts from an official EL8 source RPM, updates the spec for the target EL version, fetches the requested Icinga 2 tarball, and rebuilds with `mock`.
+
+**Prerequisites:** Docker, Docker Compose, and optionally GitHub CLI (`gh`) for releases.
+
+### Build arguments
+
+| Argument | Meaning | Default |
+| --- | --- | --- |
+| `ALMALINUX_VERSION` | Target major version (`9` or `10`) | `9` |
+| `ICINGA_VERSION` | Icinga 2 tag to download and package | `2.16.5` |
+| `ICINGA_SRPM_VERSION` | Bundled source RPM version | `2.14.3` |
+
+`docker-compose.yml` defines two services:
+
+| Service | Target | RPMs on the host |
+| --- | --- | --- |
+| `alma9` | AlmaLinux 9 | `rpmbuild-alma9/` |
 | `alma10` | AlmaLinux 10 | `rpmbuild-alma10/` |
 
-## Prerequisites
-
-- Docker
-- Docker Compose (for the recommended build)
-- GitHub CLI (`gh`) if you create the release from the command line
-
-## Build with Docker Compose (recommended)
-
-Build and run both targets:
+### Docker Compose (recommended)
 
 ```bash
 docker compose up --build
 ```
 
-Build one target only:
+One target only:
 
 ```bash
 docker compose up --build alma9
 docker compose up --build alma10
 ```
 
-When a build finishes, packages are under the matching host directory
-(typically `x86_64/` and `noarch/` inside `rpmbuild-alma9/` or
-`rpmbuild-alma10/`).
+Finished packages land under `rpmbuild-alma9/` or `rpmbuild-alma10/` (typically `x86_64/` and `noarch/`).
 
-## Build with Docker
+### Plain Docker
 
-AlmaLinux 9 (the default):
+AlmaLinux 9:
 
 ```bash
 docker build -t icinga2-alma-builder:9 --build-arg ALMALINUX_VERSION=9 .
@@ -60,29 +111,11 @@ docker run --rm --privileged \
   icinga2-alma-builder:10
 ```
 
-`--privileged` is required for `mock`. The volume mounts match
-`docker-compose.yml`.
+`--privileged` is required for `mock`. Without a volume, packages stay in `/root/rpmbuild/RPMS/` inside the container.
 
-Without a volume, packages stay in `/root/rpmbuild/RPMS/` inside the
-container. Copy them out with `docker cp` if you need them.
+### Publish a release
 
-## Create a GitHub release
-
-Publish the RPMs as a GitHub release so others can download them without
-rebuilding. Attach both the EL9 and EL10 packages when both builds succeeded.
-
-1. Confirm the packages you want to attach, for example:
-
-   ```bash
-   find rpmbuild-alma9 rpmbuild-alma10 -name '*.rpm' | sort
-   ```
-
-2. Commit any Dockerfile version bump and push to `main`.
-3. Create a release whose tag matches `ICINGA_VERSION` (for example `v2.16.5`).
-
-### GitHub CLI
-
-From the repository root, after successful builds:
+Attach both EL9 and EL10 RPMs when both builds succeeded. Tag the release to match `ICINGA_VERSION` (for example `v2.16.5`).
 
 ```bash
 VERSION=2.16.5
@@ -93,40 +126,6 @@ gh release create "v${VERSION}" \
   $(find rpmbuild-alma9 rpmbuild-alma10 -name '*.rpm' | tr '\n' ' ')
 ```
 
-If the tag already exists, add `--target main` only when creating a new tag;
-do not overwrite an existing release unless you intend to.
+Or use the GitHub UI: [Releases](https://github.com/DigistateBV/icinga2-alma-builder/releases) → **Draft a new release** → attach the RPMs from `rpmbuild-alma9/` and `rpmbuild-alma10/`.
 
-After the release is published, the RPMs are available on the GitHub release
-page for that tag. A workflow also rebuilds the yum/dnf repository on GitHub Pages from those release assets.
-
-### GitHub web UI
-
-1. Open [Releases](https://github.com/DigistateBV/icinga2-alma-builder/releases).
-2. Choose **Draft a new release**.
-3. Create a new tag such as `v2.16.5` on `main`.
-4. Set the title (for example `Icinga 2.16.5 for AlmaLinux 9 and 10`) and a short description of what was built.
-5. Attach the RPM files from `rpmbuild-alma9/` and `rpmbuild-alma10/` (you can select the `x86_64` and `noarch` contents of each).
-6. Publish the release.
-
-## Install from GitHub Pages
-
-One-time setup on AlmaLinux 9 or 10:
-
-```bash
-sudo curl -fsSL -o /etc/yum.repos.d/icinga2-alma.repo \
-  https://digistatebv.github.io/icinga2-alma-builder/icinga2-alma.repo
-sudo dnf install icinga2
-```
-
-The repo file uses `$releasever`, so the host picks `el9` or `el10` automatically.
-Packages are not GPG-signed (`gpgcheck=0`).
-
-### Enable GitHub Pages (once)
-
-In the GitHub repo: **Settings → Pages → Source: GitHub Actions**. After that, publishing a release (or running the **Deploy yum repository to GitHub Pages** workflow) publishes:
-- `icinga2-alma.repo`
-- `el9/` and `el10/` yum repositories built with `createrepo_c` from the
-  release RPMs
-
-The site URL is
-https://digistatebv.github.io/icinga2-alma-builder/
+Publishing a release (or running **Deploy yum repository to GitHub Pages**) rebuilds the public yum/dnf repo on GitHub Pages. Pages must be set once to **Source: GitHub Actions**.
